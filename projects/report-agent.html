@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自动分析报告 Agent · Demo</title>
+<style>
+  :root{--bg:#f6f5f2;--surface:#fff;--ink:#171717;--muted:#5f5f5c;--line:#e4e1da;--accent:#e5484d;--mono:"SF Mono",Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;letter-spacing:0}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 22px 72px}
+  .back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none}
+  .back:hover{color:var(--ink)}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(30px,6vw,52px);line-height:1.05;margin:20px 0 8px;font-weight:400;letter-spacing:-0.02em}
+  .sub{color:var(--muted);margin:0 0 32px;font-size:15px}
+  .panel{background:var(--surface);border:1px solid var(--line);padding:20px;margin-bottom:20px;border-top:3px solid var(--ink)}
+  label{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px}
+  textarea{width:100%;min-height:150px;font:13px/1.5 var(--mono);border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:#fff;color:var(--ink);resize:vertical}
+  .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  button{cursor:pointer;border:0;border-radius:6px;padding:11px 16px;font-weight:600;font-size:14px}
+  .run{background:var(--ink);color:#fff}
+  .run:hover{background:#000}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  h2{font-size:15px;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase}
+  .summary{font-size:14px;color:var(--muted);white-space:pre-wrap}
+  canvas{width:100%;max-width:640px;height:300px;margin-top:12px}
+  .note{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">← 返回主页</a>
+  <h1>自动分析报告 Agent</h1>
+  <p class="sub">粘贴 CSV 数据，自动生成统计摘要、图表和分析结论。</p>
+
+  <div class="panel">
+    <label for="csv">CSV 数据</label>
+    <textarea id="csv" spellcheck="false"></textarea>
+    <div class="row">
+      <button class="ghost" id="sample">加载示例数据</button>
+      <button class="run" id="run">生成报告</button>
+      <button class="ghost" id="download">下载 HTML 报告</button>
+    </div>
+  </div>
+
+  <div class="panel" id="out" style="display:none">
+    <h2>字段统计</h2>
+    <div id="stats"></div>
+    <h2 style="margin-top:18px">分布图</h2>
+    <canvas id="chart" width="640" height="300"></canvas>
+    <h2 style="margin-top:18px">分析结论</h2>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <p class="note">说明：这是离线数据分析 Demo，用浏览器 JavaScript 完成解析和统计；真实版本可接入大模型生成自然语言结论。</p>
+</div>
+<script>
+const sampleCSV = `region,category,amount,month
+华东,数码,899,1月
+华东,数码,1299,2月
+华南,服装,299,1月
+华南,食品,88,3月
+华北,数码,1999,2月
+华北,服装,459,3月
+西南,食品,66,1月
+西南,数码,1599,4月
+华东,服装,399,4月
+华南,数码,2499,4月`;
+
+const csv = document.getElementById("csv");
+document.getElementById("sample").onclick = () => { csv.value = sampleCSV; run(); };
+
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
+  const headers = lines[0].split(",").map(s=>s.trim());
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const cells = lines[i].split(",").map(s=>s.trim());
+    const row = {};
+    headers.forEach((h,j)=>row[h]=cells[j] ?? "");
+    rows.push(row);
+  }
+  return {headers, rows};
+}
+
+function isNumeric(v){ return v !== "" && !isNaN(Number(v)); }
+
+function stats(headers, rows){
+  const out = [];
+  headers.forEach(h=>{
+    const vals = rows.map(r=>r[h]);
+    if(vals.every(isNumeric)){
+      const n = vals.map(Number);
+      const sum = n.reduce((a,b)=>a+b,0);
+      const mean = sum/n.length;
+      const min = Math.min(...n), max = Math.max(...n);
+      out.push({field:h,type:"数值",count:n.length,sum,mean:Math.round(mean*100)/100,min,max});
+    } else {
+      const freq = {};
+      vals.forEach(v=>freq[v]=(freq[v]||0)+1);
+      const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+      out.push({field:h,type:"分类",count:vals.length,distinct:Object.keys(freq).length,top:top?top[0]:""});
+    }
+  });
+  return out;
+}
+
+function renderStats(st){
+  const keys = [...new Set(st.flatMap(r=>Object.keys(r)))];
+  let h = "<table><thead><tr>"+keys.map(k=>"<th>"+k+"</th>").join("")+"</tr></thead><tbody>";
+  h += st.map(r=>"<tr>"+keys.map(k=>"<td>"+(r[k] ?? "")+"</td>").join("")+"</tr>").join("");
+  return h+"</tbody></table>";
+}
+
+function drawChart(rows, field){
+  const canvas = document.getElementById("chart");
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,w,h);
+  const freq = {};
+  rows.forEach(r=>freq[r[field]]=(freq[r[field]]||0)+1);
+  const items = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max = Math.max(...items.map(x=>x[1]),1);
+  const pad = 36;
+  const bw = (w-pad*2)/items.length;
+  items.forEach(([label,v],i)=>{
+    const bh = (h-pad*2)*(v/max);
+    const x = pad + i*bw + 4;
+    const y = h-pad-bh;
+    ctx.fillStyle = "#e5484d";
+    ctx.fillRect(x,y,bw-8,bh);
+    ctx.fillStyle = "#5f5f5c";
+    ctx.font = "11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, x+(bw-8)/2, h-pad+14);
+  });
+  ctx.strokeStyle = "#e4e1da";
+  ctx.beginPath(); ctx.moveTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.stroke();
+}
+
+function buildSummary(headers, rows, st){
+  const numFields = st.filter(x=>x.type==="数值");
+  const lines = [];
+  lines.push("共分析 " + rows.length + " 条记录、"+headers.length+" 个字段。");
+  numFields.forEach(x=>{
+    lines.push(x.field + "：平均值 " + x.mean + "，最小 " + x.min + "，最大 " + x.max + "。");
+  });
+  const cat = st.find(x=>x.type==="分类");
+  if(cat) lines.push(cat.field + " 共有 " + cat.distinct + " 个分类，最常见的是「"+cat.top+"」。");
+  return lines.join("\n");
+}
+
+let lastReport = null;
+function run(){
+  const {headers, rows} = parseCSV(csv.value);
+  if(!rows.length){ document.getElementById("out").style.display="none"; return; }
+  const st = stats(headers, rows);
+  document.getElementById("stats").innerHTML = renderStats(st);
+  const catField = st.find(x=>x.type==="分类")?.field || headers[0];
+  drawChart(rows, catField);
+  document.getElementById("summary").textContent = buildSummary(headers, rows, st);
+  document.getElementById("out").style.display = "block";
+  lastReport = {headers, rows, st, summary: buildSummary(headers, rows, st)};
+}
+
+document.getElementById("run").onclick = run;
+document.getElementById("download").onclick = () => {
+  if(!lastReport) run();
+  const r = lastReport;
+  const html = "<!doctype html><meta charset='utf-8'><title>分析报告</title><style>body{font-family:sans-serif;max-width:720px;margin:40px auto;line-height:1.6}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}</style><h1>数据分析报告</h1><p>"+r.summary.replace(/\n/g,"<br>")+"</p>"+renderStats(r.st)+"";
+  const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "analysis-report.html";
+  a.click();
+};
+
+csv.value = sampleCSV;
+run();
+</script>
+</body>
+</html>

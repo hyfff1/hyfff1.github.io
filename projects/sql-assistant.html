@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL 自然语言查询助手 · Demo</title>
+<style>
+  :root{--bg:#f6f5f2;--surface:#fff;--ink:#171717;--muted:#5f5f5c;--line:#e4e1da;--accent:#e5484d;--mono:"SF Mono",Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;letter-spacing:0}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 22px 72px}
+  a{color:inherit}
+  .back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none}
+  .back:hover{color:var(--ink)}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(30px,6vw,52px);line-height:1.05;margin:20px 0 8px;font-weight:400;letter-spacing:-0.02em}
+  .sub{color:var(--muted);margin:0 0 32px;font-size:15px}
+  .panel{background:var(--surface);border:1px solid var(--line);padding:20px;margin-bottom:20px;border-top:3px solid var(--ink)}
+  label{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px}
+  textarea,input{width:100%;font:14px/1.5 var(--sans);border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:#fff;color:var(--ink)}
+  textarea{min-height:76px;resize:vertical}
+  .row{display:flex;gap:10px;margin-top:12px}
+  .row input{flex:1}
+  button{cursor:pointer;border:0;border-radius:6px;padding:11px 16px;font-weight:600;font-size:14px}
+  .run{background:var(--ink);color:#fff}
+  .run:hover{background:#000}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:var(--surface);cursor:pointer;color:var(--muted)}
+  .chip:hover{border-color:var(--ink);color:var(--ink)}
+  h2{font-size:15px;margin:0 0 12px}
+  .sql{font-family:var(--mono);font-size:13px;background:#f0eee9;border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto;white-space:pre-wrap}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase}
+  .note{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">← 返回主页</a>
+  <h1>SQL 自然语言查询助手</h1>
+  <p class="sub">用中文或英文提问，自动生成 SQL 并在示例销售数据上运行。</p>
+
+  <div class="panel">
+    <label for="q">你的问题</label>
+    <div class="row">
+      <input id="q" placeholder="例如：华东地区销售额是多少？" />
+      <button class="run" id="run">查询</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="panel" id="result" style="display:none">
+    <h2>生成的 SQL</h2>
+    <pre class="sql" id="sql"></pre>
+    <h2 style="margin-top:18px">结果</h2>
+    <div id="table"></div>
+  </div>
+
+  <p class="note">说明：这是离线规则解析 Demo，基于少量意图和示例数据；真实版本会接入大模型来生成任意 SQL。</p>
+</div>
+<script>
+const data = [
+  {order_id:1001, region:"华东", category:"数码", amount:899, month:"1月"},
+  {order_id:1002, region:"华东", category:"数码", amount:1299, month:"2月"},
+  {order_id:1003, region:"华南", category:"服装", amount:299, month:"1月"},
+  {order_id:1004, region:"华南", category:"食品", amount:88, month:"3月"},
+  {order_id:1005, region:"华北", category:"数码", amount:1999, month:"2月"},
+  {order_id:1006, region:"华北", category:"服装", amount:459, month:"3月"},
+  {order_id:1007, region:"西南", category:"食品", amount:66, month:"1月"},
+  {order_id:1008, region:"西南", category:"数码", amount:1599, month:"4月"},
+  {order_id:1009, region:"华东", category:"服装", amount:399, month:"4月"},
+  {order_id:1010, region:"华南", category:"数码", amount:2499, month:"4月"}
+];
+
+function cols(rows){
+  if(!rows.length) return [];
+  return Object.keys(rows[0]);
+}
+function renderTable(rows){
+  const keys = cols(rows);
+  if(!keys.length) return "<p>没有匹配的数据。</p>";
+  let h = "<table><thead><tr>" + keys.map(k=>"<th>"+k+"</th>").join("") + "</tr></thead><tbody>";
+  h += rows.map(r=>"<tr>"+keys.map(k=>"<td>"+(r[k] ?? "")+"</td>").join("")+"</tr>").join("");
+  return h+"</tbody></table>";
+}
+
+const examples = [
+  ["总销售额是多少", "总销售额"],
+  ["每个地区的销售额", "各区域销售额"],
+  ["平均订单金额", "平均客单价"],
+  ["金额大于 1000 的订单", "高金额订单"],
+  ["华南地区的订单", "华南地区"],
+  ["各品类订单数", "品类统计"]
+];
+const chips = document.getElementById("chips");
+examples.forEach(([q]) => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.textContent = q;
+  b.onclick = () => { document.getElementById("q").value = q; run(); };
+  chips.appendChild(b);
+});
+
+function match(q){
+  const s = q.toLowerCase();
+  if(/(总|全部|sum|total).*(销售|金额|sales|amount)/.test(s) && !/(地区|区域|region|品类|category|每个|各)/.test(s)){
+    const sum = data.reduce((a,r)=>a+r.amount,0);
+    return {sql:"SELECT SUM(amount) AS total_sales FROM orders;", rows:[{total_sales:sum}]};
+  }
+  if(/(每个|各|按|by|group).*(地区|区域|region)/.test(s)){
+    const m = {};
+    data.forEach(r=>m[r.region]=(m[r.region]||0)+r.amount);
+    return {sql:"SELECT region, SUM(amount) AS sales FROM orders GROUP BY region;", rows:Object.entries(m).map(([region,sales])=>({region,sales}))};
+  }
+  if(/(平均|average|avg).*(金额|订单|amount|price)/.test(s)){
+    const avg = Math.round(data.reduce((a,r)=>a+r.amount,0)/data.length);
+    return {sql:"SELECT AVG(amount) AS avg_amount FROM orders;", rows:[{avg_amount:avg}]};
+  }
+  if(/(品类|category).*(订单|数量|count)/.test(s)){
+    const m = {};
+    data.forEach(r=>m[r.category]=(m[r.category]||0)+1);
+    return {sql:"SELECT category, COUNT(*) AS order_count FROM orders GROUP BY category;", rows:Object.entries(m).map(([category,order_count])=>({category,order_count}))};
+  }
+  const gt = s.match(/(大于|超过|above|more than|>)\s*(\d+)/) || s.match(/(\d+)\s*(以上)/);
+  if(gt){
+    const n = +gt[2] || +gt[1];
+    return {sql:`SELECT * FROM orders WHERE amount > ${n};`, rows:data.filter(r=>r.amount>n)};
+  }
+  if(/华南/.test(s)||/south/.test(s)) return {sql:"SELECT * FROM orders WHERE region = '华南';", rows:data.filter(r=>r.region==="华南")};
+  if(/华东/.test(s)||/east/.test(s)) return {sql:"SELECT * FROM orders WHERE region = '华东';", rows:data.filter(r=>r.region==="华东")};
+  if(/华北/.test(s)||/north/.test(s)) return {sql:"SELECT * FROM orders WHERE region = '华北';", rows:data.filter(r=>r.region==="华北")};
+  if(/西南/.test(s)||/west/.test(s)) return {sql:"SELECT * FROM orders WHERE region = '西南';", rows:data.filter(r=>r.region==="西南")};
+  return {sql:"SELECT * FROM orders LIMIT 10;", rows:data};
+}
+
+function run(){
+  const q = document.getElementById("q").value.trim();
+  if(!q){ document.getElementById("q").focus(); return; }
+  const {sql, rows} = match(q);
+  document.getElementById("sql").textContent = sql;
+  document.getElementById("table").innerHTML = renderTable(rows);
+  document.getElementById("result").style.display = "block";
+}
+document.getElementById("run").onclick = run;
+document.getElementById("q").addEventListener("keydown", e=>{ if(e.key==="Enter") run(); });
+document.getElementById("q").value = "总销售额是多少";
+run();
+</script>
+</body>
+</html>
