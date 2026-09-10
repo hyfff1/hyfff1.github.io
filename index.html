@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,8 +21,8 @@
       </nav>
       <div class="header-actions">
         <div class="lang-switch" role="group" aria-label="Language">
-          <button type="button" data-lang="zh" class="active">中</button>
-          <button type="button" data-lang="en">EN</button>
+          <button type="button" data-lang="zh">中</button>
+          <button type="button" data-lang="en" class="active">EN</button>
         </div>
         <button class="menu-toggle" type="button" aria-label="Menu" aria-expanded="false">
           <span></span><span></span><span></span>
@@ -36,11 +36,11 @@
       <div class="container hero-inner">
         <img class="avatar" src="avatar.jpg" alt="lamwanfung portrait" width="112" height="112">
         <div class="hero-text">
-          <p class="eyebrow" data-i18n="hero.eyebrow">个人主页 · 2026</p>
+          <p class="eyebrow" data-i18n="hero.eyebrow">个人主页</p>
           <h1>lamwanfung</h1>
           <p class="role" data-i18n="hero.role">Data Analytics · Agent Engineer</p>
           <p class="tagline" data-i18n="hero.tagline">把数据变成决策，把重复工作交给 Agent。</p>
-          <p class="status" data-i18n="hero.status">香港 · 数据分析 · Agent · 2026</p>
+          <p class="status" data-i18n="hero.status">香港 · 数据分析 · Agent</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#projects" data-i18n="hero.view">查看项目</a>
             <a class="btn btn-secondary" href="mailto:ab62211669@gmail.com" data-i18n="hero.contact">联系我</a>
@@ -53,7 +53,7 @@
       <div class="container">
         <p class="kicker" data-i18n="about.kicker">01 · 关于</p>
         <h2 class="section-title" data-i18n="about.title">关于我</h2>
-        <p class="lead" data-i18n="about.lead">我是 lamwanfung，一名数据分析学习者，也是正在成长的 Agent 工程师。我喜欢把杂乱的数据整理成清晰的结论，也喜欢用 AI Agent 让重复工作更高效。目前即将入读香港科技大学工业工程与决策分析本科。</p>
+        <p class="lead" data-i18n="about.lead">我是 lamwanfung，一名数据分析学习者，也是正在成长的 Agent 工程师。我喜欢把杂乱的数据整理成清晰的结论，也喜欢用 AI Agent 让重复工作更高效。目前是香港科技大学工业工程与决策分析本科的大二学生。</p>
         <div class="meta-grid">
           <div class="meta-item">
             <span class="meta-label" data-i18n="about.locationLabel">地点</span>
@@ -72,7 +72,7 @@
         <p class="kicker" data-i18n="education.kicker">02 · 教育</p>
         <h2 class="section-title" data-i18n="education.title">教育</h2>
         <div class="education-card">
-          <div class="education-date" data-i18n="education.date">2026 年 9 月入学</div>
+          <div class="education-date" data-i18n="education.date">大二在读</div>
           <div class="education-main">
             <h3 data-i18n="education.school">香港科技大学</h3>
             <p data-i18n="education.degree">工业工程与决策分析（本科）</p>
@@ -143,6 +143,35 @@
             </ul>
           </div>
         </div>
+        <div class="experience-item">
+          <div class="experience-meta">
+            <span class="experience-date" data-i18n="experience.p2.date">2026 年 8 月</span>
+            <span class="experience-type" data-i18n="experience.p2.type">公司内部工具 · 升学建议</span>
+          </div>
+          <div class="experience-main">
+            <h3 data-i18n="experience.p2.company">Non-JUPAS 升学数据库 · 独立开发</h3>
+            <ul class="experience-list">
+              <li data-i18n="experience.p2.b1">独立开发公司内部 Non-JUPAS 升学数据库，清洗并标准化 Telegram 频道数据，导入 SQLite，提取大学、学科、CGPA、Offer 状态等结构化字段。</li>
+              <li data-i18n="experience.p2.b2">用 FastAPI 搭建后端和带邀请码权限的网页查询系统，支持中文自然语言转 SQL 与数据查询。</li>
+              <li data-i18n="experience.p2.b3">设计学科 CGPA 参考和学生匹配逻辑，用样本量、中位数、范围和趋势等统计口径辅助升学建议，并规划置信区间与可解释录取概率模型。</li>
+              <li data-i18n="experience.p2.b4">通过 Cloudflare 隧道发布试用版，覆盖数据整合、查询分析、决策建议和报告导出的完整流程。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="experience-item">
+          <div class="experience-meta">
+            <span class="experience-date" data-i18n="experience.p3.date">2026 年 9 月</span>
+            <span class="experience-type" data-i18n="experience.p3.type">公司自动化 · 视频生产</span>
+          </div>
+          <div class="experience-main">
+            <h3 data-i18n="experience.p3.company">鼎熙官号每日短视频自动化</h3>
+            <ul class="experience-list">
+              <li data-i18n="experience.p3.b1">把原始素材自动处理成品牌短视频，支持竖屏转换、人脸马赛克、静音、BGM 混音、掐头尾和水印。</li>
+              <li data-i18n="experience.p3.b2">自动生成片头片尾、封面、预览和发布文案，并做黑屏、模糊、音轨自检，每天一键出片。</li>
+              <li data-i18n="experience.p3.b3">用 Python 和 FFmpeg 搭建可复用流水线，减少重复人工剪辑，保证成片风格统一。</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -164,48 +193,20 @@
             <span data-i18n="projects.p1.tech2">团队协作</span>
           </div>
         </div>
-        <div class="projects-grid">
-          <article class="project-card">
-            <div class="project-head">
-              <span class="project-tag" data-i18n="projects.agent">Agent 项目</span>
-              <span class="project-badge">Demo</span>
-            </div>
-            <h3 data-i18n="projects.p2.title">SQL 自然语言查询助手</h3>
-            <p data-i18n="projects.p2.desc">用中文或英文提问，自动生成 SQL 并在示例数据上运行，展示自然语言到查询结果的完整链路。</p>
-            <div class="tech-list">
-              <span>SQL</span>
-              <span>JavaScript</span>
-            </div>
-            <a class="project-link" href="projects/sql-assistant.html" target="_blank" rel="noopener" data-i18n="projects.demo">在线演示</a>
-          </article>
-
-          <article class="project-card">
-            <div class="project-head">
-              <span class="project-tag" data-i18n="projects.agent">Agent 项目</span>
-              <span class="project-badge">Demo</span>
-            </div>
-            <h3 data-i18n="projects.p3.title">自动分析报告 Agent</h3>
-            <p data-i18n="projects.p3.desc">粘贴 CSV 数据，自动生成字段统计、分布图和分析结论，并可下载 HTML 报告。</p>
-            <div class="tech-list">
-              <span>CSV</span>
-              <span>JavaScript</span>
-            </div>
-            <a class="project-link" href="projects/report-agent.html" target="_blank" rel="noopener" data-i18n="projects.demo">在线演示</a>
-          </article>
-
-          <article class="project-card">
-            <div class="project-head">
-              <span class="project-tag" data-i18n="projects.agent">Agent 项目</span>
-              <span class="project-badge">Demo</span>
-            </div>
-            <h3 data-i18n="projects.p4.title">知识库问答 Agent</h3>
-            <p data-i18n="projects.p4.desc">上传文档后用自然语言提问，通过 TF-IDF 检索返回最相关的原文片段。</p>
-            <div class="tech-list">
-              <span>RAG</span>
-              <span>TF-IDF</span>
-            </div>
-            <a class="project-link" href="projects/rag-qa.html" target="_blank" rel="noopener" data-i18n="projects.demo">在线演示</a>
-          </article>
+        <div class="project-card">
+          <div class="project-head">
+            <span class="project-tag" data-i18n="projects.p5.tag">量化研究</span>
+            <span class="project-badge">GitHub</span>
+          </div>
+          <h3 data-i18n="projects.p5.title">美股因子研究流水线</h3>
+          <p data-i18n="projects.p5.desc">每周自动下载美股数据，计算基于金融逻辑的因子，统计 IC/IR，做含成本的周度回测并与 VOO 对比，包含样本外验证和滚动选因子。</p>
+          <div class="tech-list">
+            <span>Python</span>
+            <span>Pandas</span>
+            <span>Quant</span>
+            <span>Backtest</span>
+          </div>
+          <a class="project-link" href="https://github.com/hyfff1/quant-factor-weekly" target="_blank" rel="noopener" data-i18n="projects.p5.link">GitHub 仓库</a>
         </div>
       </div>
     </section>
@@ -231,7 +232,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <p data-i18n="footer.rights">© 2026 lamwanfung</p>
+      <p data-i18n="footer.rights">© lamwanfung</p>
     </div>
   </footer>
 
